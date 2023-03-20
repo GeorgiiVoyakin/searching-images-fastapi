@@ -1,6 +1,7 @@
 import io
 from datetime import datetime, timedelta
 from typing import List
+import random
 
 import numpy as np
 import tensorflow as tf
@@ -166,7 +167,10 @@ def create_image_for_user(
     db_image = crud.get_image_by_path(db, path=image.path)
     if db_image:
         raise HTTPException(status_code=400, detail="Image already exists")
-    return crud.create_user_image(db=db, image=image, user_id=user_id)
+
+    objects = random.sample(["cat", "dog", "apple", "banana", "car",
+                             "bus", "train", "truck", "ball", "bottle"], 3)
+    return crud.create_image_with_objects(db=db, image=image, user_id=user_id, objects=objects)
 
 
 @app.get("/images/", response_model=List[schemas.Image])

@@ -60,3 +60,16 @@ def add_object_to_image(db: Session, object: str, image_id: int):
     db.commit()
     db.refresh(db_object)
     return db_object
+
+
+def create_image_with_objects(db: Session, image: schemas.ImageCreate, user_id: int, objects: list[str]):
+    db_image = models.Image(**image.dict(), owner_id=user_id)
+    db.add(db_image)
+    db.commit()
+    db.refresh(db_image)
+    for object in objects:
+        db_object = models.ImageObject(object=object, image_id=db_image.id)
+        db.add(db_object)
+    db.commit()
+    db.refresh(db_image)
+    return db_image
