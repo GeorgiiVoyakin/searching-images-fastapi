@@ -28,6 +28,8 @@ class Image(Base):
     owner = relationship("User", back_populates="images")
     objects = relationship("ImageObject", back_populates="images")
 
+    __str__ = __repr__ = lambda self: f"Image(id={self.id}, path={self.path}, owner_id={self.owner_id})"
+
 
 class ImageObject(Base):
     __tablename__ = "image_objects"

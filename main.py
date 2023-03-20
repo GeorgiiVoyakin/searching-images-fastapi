@@ -171,8 +171,17 @@ def create_image_for_user(
 
 @app.get("/images/", response_model=List[schemas.Image])
 def read_images(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = crud.get_images(db, skip=skip, limit=limit)
-    return items
+    images = crud.get_images(db, skip=skip, limit=limit)
+    for image in images:
+        print(image)
+    return images
+
+
+@app.post("/images/{image_id}/objects", response_model=schemas.ImageObject)
+def add_object_to_image(
+    image_id: int, object: str, db: Session = Depends(get_db)
+):
+    return crud.add_object_to_image(db=db, object=object, image_id=image_id)
 
 
 @app.get("/images/{object}", response_model=List[schemas.Image])

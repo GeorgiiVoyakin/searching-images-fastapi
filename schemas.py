@@ -10,9 +10,16 @@ class TokenData(BaseModel):
     username: str | None = None
 
 
+class ImageObject(BaseModel):
+    image_id: int
+    object: str
+
+    class Config:
+        orm_mode = True
+
+
 class ImageBase(BaseModel):
     path: str
-    objects_list: list[str]
 
 
 class ImageCreate(ImageBase):
@@ -22,6 +29,8 @@ class ImageCreate(ImageBase):
 class Image(ImageBase):
     id: int
     owner_id: int
+
+    objects: list[ImageObject] = []
 
     class Config:
         orm_mode = True
