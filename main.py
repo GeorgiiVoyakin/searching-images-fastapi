@@ -85,7 +85,6 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-# Загружаем модель
 model = tf.keras.applications.MobileNetV2()
 
 # Преобразуем изображение в формат, который можно использовать в модели
@@ -111,24 +110,6 @@ def get_objects_on_image(image: np.ndarray) -> list[str]:
                     result.append(line.split(' ', 1)[
                                   1].strip().replace('_', ' '))
     return result
-
-# Определяем маршрут API для получения изображения и возврата ответа
-
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    image = read_imagefile(await file.read())
-    prediction = model.predict(np.array([image]))
-    predicted_class = np.argmax(prediction, axis=-1)
-    return {"class_id": int(predicted_class[0])}
-
-
-@app.post("/predict_multiple_files")
-async def predict_multiple_files(files: List[UploadFile] = File(...)):
-    images = [read_imagefile(await file.read()) for file in files]
-    predictions = model.predict(np.array(images))
-    predicted_classes = np.argmax(predictions, axis=-1)
-    return {"class_ids": [int(class_id) for class_id in predicted_classes]}
 
 
 @app.post("/token", response_model=Token)
