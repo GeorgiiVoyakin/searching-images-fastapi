@@ -74,6 +74,15 @@ class User(UserBase):
 
     images: list[Image] = []
     albums: list[Album] = []
+    favorites: list[Image] = []
+
+    class Config:
+        orm_mode = True
+
+
+class Favorite(BaseModel):
+    image_id: int
+    owner_id: int
 
     class Config:
         orm_mode = True

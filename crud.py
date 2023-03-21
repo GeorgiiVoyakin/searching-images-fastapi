@@ -116,3 +116,19 @@ def add_image_to_album(db: Session, album_id: int, image_id: int):
     db.commit()
     db.refresh(db_album)
     return db_album
+
+
+def get_own_favorite_images(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Favorite).filter(models.Favorite.owner_id == user_id).offset(skip).limit(limit).all()
+
+
+def add_image_to_favorites(db: Session, image_id: int, user_id: int):
+    db_favorite = models.Favorite(image_id=image_id, owner_id=user_id)
+    db.add(db_favorite)
+    db.commit()
+    db.refresh(db_favorite)
+    return db_favorite
+
+
+def get_favorite_image(db: Session, image_id: int, user_id: int):
+    return db.query(models.Favorite).filter(models.Favorite.image_id == image_id, models.Favorite.owner_id == user_id).first()

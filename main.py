@@ -298,3 +298,38 @@ def add_image_to_album(
     if db_image.owner_id != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
     return crud.add_image_to_album(db=db, album_id=album_id, image_id=image_id)
+
+
+@app.get("/users/me/images/favorites/", response_model=List[schemas.Favorite])
+def read_own_favorite_images(user_id: int, current_user: User = Depends(get_current_active_user), skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    # check if current_user is the same as user_id
+    if crud.get_user(db, user_id) != current_user:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    images = crud.get_own_favorite_images(
+        db=db, skip=skip, limit=limit, user_id=user_id)
+    return images
+
+
+@app.post("/users/{user_id}/images/{image_id}/favorites", response_model=schemas.Favorite)
+def add_image_to_favorites(
+    user_id: int,
+    image_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # check if current_user is the same as user_id
+    if crud.get_user(db, user_id) != current_user:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    db_image = crud.get_image(db, image_id)
+    if db_image is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    # check if image belongs to user
+    if db_image.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    # check if image is already in favorites
+    if crud.get_favorite_image(db, image_id=image_id, user_id=user_id):
+        raise HTTPException(
+            status_code=400, detail="Image already in favorites")
+    return crud.add_image_to_favorites(db=db, image_id=image_id, user_id=user_id)

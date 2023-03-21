@@ -15,6 +15,7 @@ class User(Base):
 
     images = relationship("Image", back_populates="owner")
     albums = relationship("Album", back_populates="owner")
+    favorites = relationship("Favorite", back_populates="owner")
 
     __str__ = __repr__ = lambda self: f"User(id={self.id}, username={self.username}, email={self.email}, hashed_password={self.hashed_password}, is_active={self.is_active})"
 
@@ -67,3 +68,17 @@ class Album(Base):
         'name', 'owner_id', name='_name_owner_uc'),)
 
     __str__ = __repr__ = lambda self: f"Album(id={self.id}, name={self.name}, owner_id={self.owner_id})"
+
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    image_id = Column(Integer, ForeignKey("images.id"))
+
+    owner = relationship("User", back_populates="favorites")
+    __table_args__ = (UniqueConstraint(
+        'owner_id', 'image_id', name='_owner_image_uc'),)
+
+    __str__ = __repr__ = lambda self: f"Favorite(id={self.id}, user_id={self.user_id}, album_id={self.album_id})"
