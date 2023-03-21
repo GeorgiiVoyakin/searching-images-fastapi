@@ -51,7 +51,7 @@ def create_user_image(db: Session, image: schemas.ImageCreate, user_id: int):
 
 
 def get_images_by_object(db: Session, object: str, skip: int = 0, limit: int = 100):
-    return db.query(models.Image).join(models.Image.objects).filter(models.ImageObject.object == object).offset(skip).limit(limit).all()
+    return db.query(models.Image).join(models.Image.objects).filter(models.ImageObject.object.like(f"%{object}%")).offset(skip).limit(limit).all()
 
 
 def add_object_to_image(db: Session, object: str, image_id: int):

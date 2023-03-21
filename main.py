@@ -1,7 +1,6 @@
 import io
 from datetime import datetime, timedelta
 from typing import List
-import random
 
 import numpy as np
 import tensorflow as tf
@@ -98,6 +97,21 @@ def read_imagefile(file) -> np.ndarray:
     image = image.resize((224, 224))
     return np.array(image) / 255.0
 
+
+def get_objects_on_image(image: np.ndarray) -> list[str]:
+    prediction = model.predict(np.array([image]))
+    predicted_class = np.argmax(prediction, axis=-1)
+    # for each class in predicted_class read word from file imagenet_classes.txt and add to list
+    result = []
+    for class_id in predicted_class:
+        with open('imagenet_classes.txt') as f:
+            # if line starts with class_id then add to result
+            for line in f:
+                if line.startswith(str(class_id)):
+                    result.append(line.split(' ', 1)[
+                                  1].strip().replace('_', ' '))
+    return result
+
 # Определяем маршрут API для получения изображения и возврата ответа
 
 
@@ -107,6 +121,14 @@ async def predict(file: UploadFile = File(...)):
     prediction = model.predict(np.array([image]))
     predicted_class = np.argmax(prediction, axis=-1)
     return {"class_id": int(predicted_class[0])}
+
+
+@app.post("/predict_multiple_files")
+async def predict_multiple_files(files: List[UploadFile] = File(...)):
+    images = [read_imagefile(await file.read()) for file in files]
+    predictions = model.predict(np.array(images))
+    predicted_classes = np.argmax(predictions, axis=-1)
+    return {"class_ids": [int(class_id) for class_id in predicted_classes]}
 
 
 @app.post("/token", response_model=Token)
@@ -140,7 +162,8 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     print(user)
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400,
+                            detail="Email already registered")
     return crud.create_user(db=db, user=user)
 
 
@@ -161,15 +184,20 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/users/{user_id}/images/", response_model=schemas.Image)
-def create_image_for_user(
-    user_id: int, image: schemas.ImageCreate, db: Session = Depends(get_db)
+async def create_image_for_user(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+
+
 ):
+    image = schemas.ImageCreate(path=file.filename)
     db_image = crud.get_image_by_path(db, path=image.path)
     if db_image:
         raise HTTPException(status_code=400, detail="Image already exists")
 
-    objects = random.sample(["cat", "dog", "apple", "banana", "car",
-                             "bus", "train", "truck", "ball", "bottle"], 3)
+    image_nd = read_imagefile(await file.read())
+    objects = get_objects_on_image(image_nd)
     return crud.create_image_with_objects(db=db, image=image, user_id=user_id, objects=objects)
 
 
