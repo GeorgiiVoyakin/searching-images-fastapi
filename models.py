@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint, Table
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -14,8 +14,17 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     images = relationship("Image", back_populates="owner")
+    albums = relationship("Album", back_populates="owner")
 
     __str__ = __repr__ = lambda self: f"User(id={self.id}, username={self.username}, email={self.email}, hashed_password={self.hashed_password}, is_active={self.is_active})"
+
+
+album_image_association_table = Table(
+    "album_image_association_table",
+    Base.metadata,
+    Column("album_id", ForeignKey("albums.id")),
+    Column("image_id", ForeignKey("images.id")),
+)
 
 
 class Image(Base):
@@ -43,3 +52,18 @@ class ImageObject(Base):
     images = relationship("Image", back_populates="objects")
 
     __str__ = __repr__ = lambda self: f"ImageObject(id={self.id}, name={self.name})"
+
+
+class Album(Base):
+    __tablename__ = "albums"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="albums")
+    images = relationship("Image", secondary=album_image_association_table)
+    __table_args__ = (UniqueConstraint(
+        'name', 'owner_id', name='_name_owner_uc'),)
+
+    __str__ = __repr__ = lambda self: f"Album(id={self.id}, name={self.name}, owner_id={self.owner_id})"

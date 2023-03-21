@@ -236,3 +236,65 @@ def read_own_images_by_object(
     images = crud.get_own_images_by_object(
         db, object=object, skip=skip, limit=limit, user_id=user_id)
     return images
+
+
+@app.get("/images/albums/", response_model=list[schemas.Album])
+def read_albums(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    albums = crud.get_albums(db=db, skip=skip, limit=limit)
+    return albums
+
+
+@app.get("/users/me/images/albums/", response_model=list[schemas.Album])
+def read_own_albums(user_id: int, current_user: User = Depends(get_current_active_user), skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    # check if current_user is the same as user_id
+    if crud.get_user(db, user_id) != current_user:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    albums = crud.get_own_albums(
+        db=db, skip=skip, limit=limit, user_id=user_id)
+    return albums
+
+
+@app.post("/users/{user_id}/images/albums/", response_model=schemas.Album)
+def create_album_for_user(
+    user_id: int,
+    album: schemas.AlbumCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # check if current_user is the same as user_id
+    if crud.get_user(db, user_id) != current_user:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    db_album = crud.get_album_by_name(db, name=album.name)
+    if db_album:
+        raise HTTPException(status_code=400, detail="Album already exists")
+    return crud.create_album(db=db, album=album, user_id=user_id)
+
+
+@app.post("/users/{user_id}/images/albums/{album_id}", response_model=schemas.Album)
+def add_image_to_album(
+    user_id: int,
+    album_id: int,
+    image_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # check if current_user is the same as user_id
+    if crud.get_user(db, user_id) != current_user:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    db_album = crud.get_album(db, album_id)
+    if db_album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+    # check if album belongs to user
+    if db_album.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    db_image = crud.get_image(db, image_id)
+    if db_image is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    # check if image belongs to user
+    if db_image.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return crud.add_image_to_album(db=db, album_id=album_id, image_id=image_id)

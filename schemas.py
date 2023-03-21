@@ -36,6 +36,24 @@ class Image(ImageBase):
         orm_mode = True
 
 
+class AlbumBase(BaseModel):
+    name: str
+
+
+class AlbumCreate(AlbumBase):
+    pass
+
+
+class Album(AlbumBase):
+    id: int
+    owner_id: int
+
+    images: list[Image] = []
+
+    class Config:
+        orm_mode = True
+
+
 class UserBase(BaseModel):
     username: str
     email: str
@@ -55,6 +73,7 @@ class User(UserBase):
     is_active: bool
 
     images: list[Image] = []
+    albums: list[Album] = []
 
     class Config:
         orm_mode = True

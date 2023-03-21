@@ -77,3 +77,42 @@ def create_image_with_objects(db: Session, image: schemas.ImageCreate, user_id: 
 
 def get_own_images_by_object(db: Session, object: str, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Image).join(models.Image.objects).filter(models.ImageObject.object.like(f"%{object}%"), models.Image.owner_id == user_id).offset(skip).limit(limit).all()
+
+
+def get_albums(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Album).offset(skip).limit(limit).all()
+
+
+def get_own_albums(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Album).filter(models.Album.owner_id == user_id).offset(skip).limit(limit).all()
+
+
+def get_album_by_name(db: Session, name: str):
+    return db.query(models.Album).filter(models.Album.name == name).first()
+
+
+def create_album(db: Session, album: schemas.AlbumCreate, user_id: int):
+    db_album = models.Album(**album.dict(), owner_id=user_id)
+    db.add(db_album)
+    db.commit()
+    db.refresh(db_album)
+    return db_album
+
+
+def get_album(db: Session, album_id: int):
+    return db.query(models.Album).filter(models.Album.id == album_id).first()
+
+
+def get_image(db: Session, image_id: int):
+    return db.query(models.Image).filter(models.Image.id == image_id).first()
+
+
+def add_image_to_album(db: Session, album_id: int, image_id: int):
+    db_album = db.query(models.Album).filter(
+        models.Album.id == album_id).first()
+    db_image = db.query(models.Image).filter(
+        models.Image.id == image_id).first()
+    db_album.images.append(db_image)
+    db.commit()
+    db.refresh(db_album)
+    return db_album
