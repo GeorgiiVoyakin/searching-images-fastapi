@@ -73,3 +73,7 @@ def create_image_with_objects(db: Session, image: schemas.ImageCreate, user_id: 
     db.commit()
     db.refresh(db_image)
     return db_image
+
+
+def get_own_images_by_object(db: Session, object: str, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Image).join(models.Image.objects).filter(models.ImageObject.object.like(f"%{object}%"), models.Image.owner_id == user_id).offset(skip).limit(limit).all()

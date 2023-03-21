@@ -223,3 +223,16 @@ def read_images_by_object(
     images = crud.get_images_by_object(
         db, object=object, skip=skip, limit=limit)
     return images
+
+
+@app.get("/users/me/images/{object}", response_model=List[schemas.Image])
+def read_own_images_by_object(
+    user_id: int, object: str, current_user: User = Depends(get_current_active_user), skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+):
+    # check if current_user is the same as user_id
+    if crud.get_user(db, user_id) != current_user:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    images = crud.get_own_images_by_object(
+        db, object=object, skip=skip, limit=limit, user_id=user_id)
+    return images
