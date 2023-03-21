@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, PickleType
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -22,11 +22,13 @@ class Image(Base):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True, index=True)
-    path = Column(String, index=True, unique=True)
+    path = Column(String, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="images")
     objects = relationship("ImageObject", back_populates="images")
+    __table_args__ = (UniqueConstraint(
+        'path', 'owner_id', name='_path_owner_uc'),)
 
     __str__ = __repr__ = lambda self: f"Image(id={self.id}, path={self.path}, owner_id={self.owner_id})"
 
