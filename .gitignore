@@ -3,3 +3,4 @@ __pycache__
 my_venv
 *.db
 imagenet_classes.txt
+venv
